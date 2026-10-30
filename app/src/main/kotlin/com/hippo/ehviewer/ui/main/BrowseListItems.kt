@@ -1221,6 +1221,8 @@ fun BrowsePhotoGridImageItem(
     allowRemoteFetch: Boolean = true,
     overflow: BrowseOverflowActions? = null,
     highlighted: Boolean = false,
+    /** Remote single-image favourite: paints the same star badge as library rows. */
+    favorited: Boolean = false,
 ) {
     if (showPhotoThumb && cover != null) {
         BrowseGridCell(
@@ -1231,16 +1233,29 @@ fun BrowsePhotoGridImageItem(
             overflow = overflow,
             highlighted = highlighted,
             thumb = {
-                BrowseCoverThumb(
-                    cover = cover,
-                    modifier = Modifier.fillMaxSize().clip(ShapeDefaults.Medium),
-                    placeholderSize = BrowseGridPlaceholderIconSize,
-                    decodeSizePx = GalleryGridDefaults.gridDecodePx(),
-                    retryKey = thumbRetryKey,
-                    allowRemoteFetch = allowRemoteFetch,
-                    photoGridThumb = true,
-                    placeholderIcon = Icons.Default.PhotoLibrary,
-                )
+                Box(Modifier.fillMaxSize()) {
+                    BrowseCoverThumb(
+                        cover = cover,
+                        modifier = Modifier.fillMaxSize().clip(ShapeDefaults.Medium),
+                        placeholderSize = BrowseGridPlaceholderIconSize,
+                        decodeSizePx = GalleryGridDefaults.gridDecodePx(),
+                        retryKey = thumbRetryKey,
+                        allowRemoteFetch = allowRemoteFetch,
+                        photoGridThumb = true,
+                        placeholderIcon = Icons.Default.PhotoLibrary,
+                    )
+                    if (favorited) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(4.dp)
+                                .size(18.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
             },
         )
     } else {

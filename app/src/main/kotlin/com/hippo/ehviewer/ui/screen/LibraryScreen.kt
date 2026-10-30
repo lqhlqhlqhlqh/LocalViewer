@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Lan
@@ -121,6 +122,7 @@ import com.hippo.ehviewer.smb.SmbRepository
 import com.hippo.ehviewer.ui.ExplorerGestureEnabled
 import com.hippo.ehviewer.ui.OpenFileExternally
 import com.hippo.ehviewer.ui.Screen
+import com.hippo.ehviewer.ui.destinations.FavoriteFilesScreenDestination
 import com.hippo.ehviewer.ui.main.BrowseFolderSection
 import com.hippo.ehviewer.ui.main.BrowseGridPlaceholderIconSize
 import com.hippo.ehviewer.ui.main.BrowseListLeadingIconSize
@@ -875,12 +877,27 @@ fun AnimatedVisibilityScope.LibraryScreen(navigator: DestinationsNavigator) = Sc
             LibraryViewModeMenu()
         },
         trailingIcon = {
-            IconButton(
-                onClick = { refresh() },
-                enabled = !scanning && !refreshing,
-                shapes = IconButtonDefaults.shapes(),
-            ) {
-                Icon(imageVector = Icons.Default.Refresh, contentDescription = stringResource(R.string.library_rescan))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = {
+                        navigator.navigate(FavoriteFilesScreenDestination) {
+                            launchSingleTop = true
+                        }
+                    },
+                    shapes = IconButtonDefaults.shapes(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = stringResource(R.string.favorite_files_title),
+                    )
+                }
+                IconButton(
+                    onClick = { refresh() },
+                    enabled = !scanning && !refreshing,
+                    shapes = IconButtonDefaults.shapes(),
+                ) {
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = stringResource(R.string.library_rescan))
+                }
             }
         },
     ) { paddingValues ->

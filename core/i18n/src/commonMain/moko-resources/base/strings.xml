@@ -1291,6 +1291,12 @@
     <string name="transfer_item_count">%d items</string>
     <string name="transfer_source_unavailable">This item is busy, being deleted, or no longer available. Refresh the folder before trying again.</string>
     <string name="transfer_delete_trash_protected">Items inside .trash cannot be deleted.</string>
+    <string name="reader_delete_image">Delete image</string>
+    <string name="reader_delete_done">Moved to the .trash folder</string>
+    <string name="favorite_files_title">Favorite images</string>
+    <string name="favorite_files_empty">No favourite images yet. Tap the heart in the reader’s bottom bar to add one.</string>
+    <string name="favorite_added">Added to favourites</string>
+    <string name="favorite_removed">Removed from favourites</string>
     <string name="ask_where_to_save">Ask where to save</string>
     <string name="transfer_upload_action">Upload to…</string>
 </resources>

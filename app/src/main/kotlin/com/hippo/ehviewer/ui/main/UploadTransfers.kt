@@ -359,7 +359,7 @@ internal object UploadTransfers {
         trackWorker(job, lease)
     }
 
-    private fun deleteFailureMessage(error: Throwable): String {
+    internal fun deleteFailureMessage(error: Throwable): String {
         val causes = generateSequence(error) { it.cause }.take(8).toList()
         val status = causes.filterIsInstance<com.hierynomus.mssmb2.SMBApiException>().firstOrNull()?.statusCode
         val davStatus = causes.filterIsInstance<com.hippo.ehviewer.webdav.WebDavTrashException>().firstOrNull()?.status

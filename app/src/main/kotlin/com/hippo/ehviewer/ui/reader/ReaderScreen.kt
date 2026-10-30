@@ -84,6 +84,7 @@ import com.ehviewer.core.ui.util.rememberSystemUiController
 import com.ehviewer.core.ui.util.thenIf
 import com.ehviewer.core.util.launch
 import com.ehviewer.core.util.launchIO
+import com.ehviewer.core.util.logcat
 import com.ehviewer.core.util.unreachable
 import com.ehviewer.core.util.withIOContext
 import com.hippo.ehviewer.EhDB
@@ -95,6 +96,7 @@ import com.hippo.ehviewer.gallery.PageLoader
 import com.hippo.ehviewer.gallery.PageStatus
 import com.hippo.ehviewer.gallery.PasswdProvider
 import com.hippo.ehviewer.gallery.ReaderNavigation
+import com.hippo.ehviewer.gallery.ReaderOriginalFile
 import com.hippo.ehviewer.gallery.ReaderSession
 import com.hippo.ehviewer.gallery.status
 import com.hippo.ehviewer.gallery.unblock
@@ -110,6 +112,7 @@ import com.hippo.ehviewer.gallery.useWebDavFolderPageLoader
 import com.hippo.ehviewer.gallery.useZipFolderPageLoader
 import com.hippo.ehviewer.image.hdr.StillExportTarget
 import com.hippo.ehviewer.image.hdr.isStillExportFileName
+import com.hippo.ehviewer.library.FileFavorites
 import com.hippo.ehviewer.library.FolderGalleryIndex
 import com.hippo.ehviewer.library.GallerySiblingNavigator
 import com.hippo.ehviewer.library.LandscapeCoverMarks
@@ -126,6 +129,7 @@ import com.hippo.ehviewer.library.isSolidArchiveFileName
 import com.hippo.ehviewer.library.isTarArchiveFileName
 import com.hippo.ehviewer.library.isZipArchiveFileName
 import com.hippo.ehviewer.smb.SmbArchiveByteSource
+import com.hippo.ehviewer.smb.SmbGateway
 import com.hippo.ehviewer.smb.SmbPasswordStore
 import com.hippo.ehviewer.smb.SmbRepository
 import com.hippo.ehviewer.ui.MainActivity
@@ -133,9 +137,11 @@ import com.hippo.ehviewer.ui.OpenPdfBySettings
 import com.hippo.ehviewer.ui.Screen
 import com.hippo.ehviewer.ui.destinations.ReaderScreenDestination
 import com.hippo.ehviewer.ui.main.GalleryGridDefaults
+import com.hippo.ehviewer.ui.main.UploadTransfers
 import com.hippo.ehviewer.ui.main.browseCoverThumbIdentity
 import com.hippo.ehviewer.ui.theme.EhTheme
 import com.hippo.ehviewer.ui.tools.DialogState
+import com.hippo.ehviewer.ui.tools.awaitConfirmationOrCancel
 import com.hippo.ehviewer.ui.tools.awaitInputText
 import com.hippo.ehviewer.ui.tools.dialog
 import com.hippo.ehviewer.util.displayString
@@ -1353,6 +1359,23 @@ fun ReaderScreen(pageLoader: ReaderSession, info: BaseGalleryInfo?, args: Reader
                 )
             }
         }
+        // Network folder readers (SMB/WebDAV) expose the page's original file; archives,
+        // local folders and PDF sessions return null, so the delete button stays hidden.
+        val deletePageIndex = (syncState.sliderValue - 1)
+            .coerceIn(0, (pageLoader.size - 1).coerceAtLeast(0))
+        val deletableOriginal = if (pageLoader.size > 0) pageLoader.originalFile(deletePageIndex) else null
+        // Single-image favourites are SMB-folder only for now (same identity as delete:
+        // sourceId + path in share). Other reader kinds simply hide the heart button.
+        val favoriteTarget = (args as? ReaderScreenArgs.SmbFolder)?.let { folder ->
+            folder.imageNames.getOrNull(deletePageIndex)?.let { name ->
+                folder to SmbGateway.joinRelativePath(folder.remoteDir, name)
+            }
+        }
+        val favoriteKeys by Settings.favoriteFiles.collectAsState()
+        val favoriteActive = favoriteTarget?.let { (folder, path) ->
+            FileFavorites.isFavorite(favoriteKeys, folder.sourceId, path)
+        } == true
+
         ReaderAppBars(
             visible = appbarVisible,
             onNavigateUp = { nav.popBackStack() },
@@ -1402,6 +1425,44 @@ fun ReaderScreen(pageLoader: ReaderSession, info: BaseGalleryInfo?, args: Reader
             },
             showScaleFitCycle = !isWebtoon && (!pagerDual || !dualPageGap),
             showLandscapeCover = pagerDual,
+            onClickDelete = deletableOriginal?.let { original ->
+                {
+                    launch {
+                        try {
+                            awaitConfirmationOrCancel(
+                                confirmText = R.string.delete,
+                                title = R.string.delete,
+                                text = { Text(stringResource(R.string.transfer_delete_confirm, 1)) },
+                            )
+                            deleteReaderPageFile(original)
+                            snackbar(string(R.string.reader_delete_done))
+                            // Stay in the reader: the page list is a snapshot, so move on
+                            // instead of leaving the trashed page under the finger.
+                            if (deletePageIndex + 1 < pageLoader.size) {
+                                syncState.sliderScrollTo(deletePageIndex + 2)
+                            }
+                        } catch (_: CancellationException) {
+                            // Confirmation dismissed or the reader left.
+                        } catch (error: Throwable) {
+                            logcat("ReaderDelete", error)
+                            snackbar(UploadTransfers.deleteFailureMessage(error))
+                        }
+                    }
+                }
+            },
+            favoriteActive = favoriteActive,
+            onClickFavorite = favoriteTarget?.let { (folder, path) ->
+                {
+                    launch {
+                        val nowFavorite = FileFavorites.toggle(folder.sourceId, path)
+                        snackbar(
+                            string(
+                                if (nowFavorite) R.string.favorite_added else R.string.favorite_removed,
+                            ),
+                        )
+                    }
+                }
+            },
         )
         if (photoGridOpen) {
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)

@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.material3.DropdownMenuItem
@@ -52,6 +55,15 @@ fun BottomReaderBar(
     showLandscapeCover: Boolean = false,
     /** PDF reader: chapter list instead of auto-rotate. */
     onClickContents: (() -> Unit)? = null,
+    /**
+     * Network folder readers only: move the current page's original file to the share's
+     * dated `.trash` folder. Null hides the button (local folders, archives, PDF, …).
+     */
+    onClickDelete: (() -> Unit)? = null,
+    /** Network folder readers: whether the current page is a single-image favourite. */
+    favoriteActive: Boolean = false,
+    /** Network folder readers only: toggle the current page's favourite. Null hides. */
+    onClickFavorite: (() -> Unit)? = null,
 ) = FlexibleBottomAppBar(
     containerColor = containerColor,
     contentPadding = PaddingValues.Zero,
@@ -171,6 +183,25 @@ fun BottomReaderBar(
         imageVector = Icons.Outlined.Settings,
         contentDescription = stringResource(R.string.action_settings),
     )
+    // 6. Favourite current image (network folder readers only). Star fills when active.
+    if (onClickFavorite != null) {
+        ActionButton(
+            onClick = onClickFavorite,
+            imageVector = if (favoriteActive) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+            contentDescription = stringResource(
+                if (favoriteActive) R.string.remove_from_favourites else R.string.add_to_favourites,
+            ),
+        )
+    }
+    // 7. Delete current image (network folder readers only; at the end so it is never
+    //    hit while cycling through the reading-mode / auto-rotate buttons).
+    if (onClickDelete != null) {
+        ActionButton(
+            onClick = onClickDelete,
+            imageVector = Icons.Default.Delete,
+            contentDescription = stringResource(R.string.reader_delete_image),
+        )
+    }
 }
 
 @Composable

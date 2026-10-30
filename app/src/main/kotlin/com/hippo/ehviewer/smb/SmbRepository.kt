@@ -3,6 +3,7 @@ package com.hippo.ehviewer.smb
 import com.ehviewer.core.database.model.SmbSourceEntity
 import com.ehviewer.core.util.logcat
 import com.ehviewer.core.util.withIOContext
+import com.hippo.ehviewer.library.FileFavorites
 import com.hippo.ehviewer.library.LocalHistory
 import com.hippo.ehviewer.library.NetworkFolderIndexCache
 import com.hippo.ehviewer.library.localLibraryDb
@@ -56,6 +57,8 @@ object SmbRepository {
 
     suspend fun delete(source: SmbSourceEntity) = withIOContext {
         runCatching { LocalHistory.deleteHistoryForSmbSource(source.id) }.onFailure { logcat(it) }
+        // Single-image favourites point at this source; drop them with the source.
+        runCatching { FileFavorites.removeSource(source.id) }.onFailure { logcat(it) }
         SmbGateway.disconnect(source.id)
         SmbPasswordStore.remove(source.id)
         NetworkFolderIndexCache.deleteSmb(source.id)

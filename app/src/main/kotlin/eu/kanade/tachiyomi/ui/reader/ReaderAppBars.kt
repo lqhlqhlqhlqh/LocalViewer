@@ -48,6 +48,12 @@ fun BoxScope.ReaderAppBars(
     showScaleFitCycle: Boolean = false,
     showLandscapeCover: Boolean = false,
     onClickContents: (() -> Unit)? = null,
+    /** Network folder readers only: trash the current page's original file. */
+    onClickDelete: (() -> Unit)? = null,
+    /** Network folder readers: the current page is a single-image favourite. */
+    favoriteActive: Boolean = false,
+    /** Network folder readers only: toggle the current page's favourite. */
+    onClickFavorite: (() -> Unit)? = null,
 ) {
     // Dark already reads as translucent grey; light used near-opaque white (0.95).
     // Match the glass look so the page shows through in both themes.
@@ -100,6 +106,9 @@ fun BoxScope.ReaderAppBars(
                     showScaleFitCycle = showScaleFitCycle,
                     showLandscapeCover = showLandscapeCover,
                     onClickContents = onClickContents,
+                    onClickDelete = onClickDelete,
+                    favoriteActive = favoriteActive,
+                    onClickFavorite = onClickFavorite,
                 )
             }
         }

@@ -86,6 +86,7 @@ import com.hippo.ehviewer.library.BrowseSession
 import com.hippo.ehviewer.library.BrowseVirtualKind
 import com.hippo.ehviewer.library.EmptyArchiveRegistry
 import com.hippo.ehviewer.library.ExplorerWindows
+import com.hippo.ehviewer.library.FileFavorites
 import com.hippo.ehviewer.library.FolderBackHistory
 import com.hippo.ehviewer.library.FolderGalleryIndex
 import com.hippo.ehviewer.library.FolderSearch
@@ -276,6 +277,7 @@ fun AnimatedVisibilityScope.SmbBrowserScreen(
     var refreshing by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val listMode by Settings.listMode.collectAsState()
+    val favoriteKeys by Settings.favoriteFiles.collectAsState()
 
     /** Photo-grid overlay; session-backed so reader navigation restores it. */
     var photoGridOverlay by remember(explorerWindowId, sourceId) {
@@ -371,6 +373,15 @@ fun AnimatedVisibilityScope.SmbBrowserScreen(
     )
 
     fun dirRelative(name: String): String = if (relativeDir.isEmpty()) name else SmbGateway.joinRelativePath(relativeDir, name)
+
+    /** Single-image favourites: images only, identified by source + path inside the share. */
+    fun isFavoriteFile(fileName: String): Boolean =
+        isImageFileName(fileName) && FileFavorites.isFavorite(favoriteKeys, sourceId, dirRelative(fileName))
+
+    fun toggleFavoriteFile(fileName: String) {
+        if (!isImageFileName(fileName)) return
+        FileFavorites.toggle(sourceId, dirRelative(fileName))
+    }
 
     fun openRemoteFolderInNewTab(name: String) {
         val segments = dirRelative(name).split('/').filter { it.isNotEmpty() }
@@ -2346,6 +2357,8 @@ fun AnimatedVisibilityScope.SmbBrowserScreen(
         } else {
             BrowseOverflowActions(
                 kind = BrowseOverflowKind.Common,
+                favorited = isFavoriteFile(fileName),
+                onFavorite = { toggleFavoriteFile(fileName) },
                 onOpenWith = { openExternalFile(fileName, asFile = true) },
                 onSaveAs = { saveSmbFile(fileName) },
                 onShare = { shareSmbFile(fileName) },
@@ -2892,6 +2905,7 @@ fun AnimatedVisibilityScope.SmbBrowserScreen(
                                             modifier = itemMod,
                                             name = entry.name,
                                             cover = imageCoverFor(entry),
+                                            favorited = isFavoriteFile(entry.fileName),
                                             showPhotoThumb = true,
                                             thumbRetryKey = refreshToken,
                                             allowRemoteFetch = allowRemoteThumbs,
@@ -3160,6 +3174,7 @@ fun AnimatedVisibilityScope.SmbBrowserScreen(
                                     modifier = Modifier.thenIf(animateItems) { animateItem() },
                                     name = file.name,
                                     cover = imageCoverFor(file),
+                                    favorited = isFavoriteFile(file.fileName),
                                     highlighted = index == progressIndex,
                                     showPhotoThumb = true,
                                     thumbRetryKey = refreshToken,
@@ -3322,6 +3337,7 @@ fun AnimatedVisibilityScope.SmbBrowserScreen(
                                                 modifier = Modifier.thenIf(animateItems) { animateItem() },
                                                 name = file.name,
                                                 cover = imageCoverFor(file),
+                                                favorited = isFavoriteFile(file.fileName),
                                                 showPhotoThumb = true,
                                                 thumbRetryKey = refreshToken,
                                                 allowRemoteFetch = allowRemoteThumbs,

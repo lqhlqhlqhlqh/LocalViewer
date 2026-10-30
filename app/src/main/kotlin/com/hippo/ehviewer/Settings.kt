@@ -420,6 +420,13 @@ object Settings : DataStorePreferences(null) {
     val favoriteBrowseThumbs = stringSetPref("favorite_browse_thumbs", emptySet())
 
     /**
+     * Single-image favourites for SMB browsing (folder readers and the SMB browser).
+     * Entries: `sfi\u0001{addedAt}\u0001{sourceId}\u0001{remoteRelativeFile}`.
+     * Only metadata: originals stay on the NAS and thumbs reuse the normal SMB caches.
+     */
+    val favoriteFiles = stringSetPref("favorite_files", emptySet())
+
+    /**
      * Explorer side-panel saved paths, newest first, one key per line.
      * `local:{rootId}:{rel}` / `smb:{sourceId}:{rel}` / `webdav:{sourceId}:{rel}`.
      * In-memory windows are not stored here; they die with the process.
