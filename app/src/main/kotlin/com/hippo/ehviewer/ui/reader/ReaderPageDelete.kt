@@ -59,7 +59,7 @@ internal suspend fun deleteReaderPageFile(original: ReaderOriginalFile): String 
             dropPageCaches(
                 page = SmbCache.cachePathForRemoteFile(sourceId, remotePath),
                 thumb = SmbCache.thumbCachePath(sourceId, remotePath),
-                resolve: SmbCache::resolveReaderPath,
+                resolve = SmbCache::resolveReaderPath,
             )
         }
         ExplorerWindows.Kind.WebDav -> {

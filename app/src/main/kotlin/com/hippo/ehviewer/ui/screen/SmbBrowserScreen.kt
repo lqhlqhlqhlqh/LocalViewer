@@ -277,7 +277,7 @@ fun AnimatedVisibilityScope.SmbBrowserScreen(
     var refreshing by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val listMode by Settings.listMode.collectAsState()
-    val favoriteKeys by Settings.favoriteFiles.collectAsState()
+    val favoriteFileKeys by Settings.favoriteFiles.collectAsState()
 
     /** Photo-grid overlay; session-backed so reader navigation restores it. */
     var photoGridOverlay by remember(explorerWindowId, sourceId) {
@@ -376,7 +376,7 @@ fun AnimatedVisibilityScope.SmbBrowserScreen(
 
     /** Single-image favourites: images only, identified by source + path inside the share. */
     fun isFavoriteFile(fileName: String): Boolean =
-        isImageFileName(fileName) && FileFavorites.isFavorite(favoriteKeys, sourceId, dirRelative(fileName))
+        isImageFileName(fileName) && FileFavorites.isFavorite(favoriteFileKeys, sourceId, dirRelative(fileName))
 
     fun toggleFavoriteFile(fileName: String) {
         if (!isImageFileName(fileName)) return

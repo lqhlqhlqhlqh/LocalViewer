@@ -91,7 +91,7 @@ object FileFavorites {
     /** Drop every favourite of a removed SMB source (mirrors history cleanup). */
     fun removeSource(sourceId: Long) {
         val cur = Settings.favoriteFiles.value
-        val next = cur.filter { parseEntry(it)?.sourceId != sourceId }
+        val next = cur.filter { parseEntry(it)?.sourceId != sourceId }.toSet()
         if (next.size != cur.size) Settings.favoriteFiles.value = next
     }
 
