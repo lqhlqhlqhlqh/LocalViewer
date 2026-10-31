@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,9 +26,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.ehviewer.core.i18n.R
 
 private val animationSpec = tween<IntOffset>(200)
 
@@ -48,6 +51,8 @@ fun BoxScope.ReaderAppBars(
     showScaleFitCycle: Boolean = false,
     showLandscapeCover: Boolean = false,
     onClickContents: (() -> Unit)? = null,
+    /** Direct delete of the current page's original file; null hides the action. */
+    onClickDelete: (() -> Unit)? = null,
 ) {
     // Dark already reads as translucent grey; light used near-opaque white (0.95).
     // Match the glass look so the page shows through in both themes.
@@ -71,6 +76,16 @@ fun BoxScope.ReaderAppBars(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = null,
                     )
+                }
+            },
+            actions = {
+                if (onClickDelete != null) {
+                    IconButton(onClick = onClickDelete, shapes = IconButtonDefaults.shapes()) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.delete),
+                        )
+                    }
                 }
             },
         )

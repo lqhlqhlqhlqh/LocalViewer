@@ -84,6 +84,7 @@ import com.ehviewer.core.ui.util.rememberSystemUiController
 import com.ehviewer.core.ui.util.thenIf
 import com.ehviewer.core.util.launch
 import com.ehviewer.core.util.launchIO
+import com.ehviewer.core.util.logcat
 import com.ehviewer.core.util.unreachable
 import com.ehviewer.core.util.withIOContext
 import com.hippo.ehviewer.EhDB
@@ -1370,6 +1371,40 @@ fun ReaderScreen(pageLoader: ReaderSession, info: BaseGalleryInfo?, args: Reader
                 )
             }
         }
+        // Direct delete: one tap moves the original file into <share>/.trash/<date>, no confirm.
+        val deleteIndex = syncState.sliderValue - 1
+        val deleteTarget = remember(pageLoader, deleteIndex) { readerDeleteTarget(pageLoader, deleteIndex) }
+        var deletingPage by remember(pageLoader) { mutableStateOf(false) }
+        val onDeletePage: (() -> Unit)? = deleteTarget
+            ?.takeIf { !slideshow && !deletingPage }
+            ?.let { target ->
+                {
+                    deletingPage = true
+                    launch {
+                        try {
+                            val name = withIOContext { moveReaderFileToTrash(target) }
+                            snackbar(activity.getString(R.string.reader_page_deleted, name))
+                            val next = when {
+                                deleteIndex + 1 < pageLoader.size -> deleteIndex + 1
+                                deleteIndex > 0 -> deleteIndex - 1
+                                else -> -1
+                            }
+                            if (next >= 0) {
+                                syncState.sliderScrollTo(next + 1)
+                            } else {
+                                nav.popBackStack()
+                            }
+                        } catch (error: CancellationException) {
+                            throw error
+                        } catch (error: Throwable) {
+                            logcat("ReaderDelete", error)
+                            snackbar(UploadTransfers.deleteFailureMessage(error))
+                        } finally {
+                            deletingPage = false
+                        }
+                    }
+                }
+            }
         ReaderAppBars(
             visible = appbarVisible,
             onNavigateUp = { nav.popBackStack() },
@@ -1419,6 +1454,7 @@ fun ReaderScreen(pageLoader: ReaderSession, info: BaseGalleryInfo?, args: Reader
             },
             showScaleFitCycle = !isWebtoon && (!pagerDual || !dualPageGap),
             showLandscapeCover = pagerDual,
+            onClickDelete = onDeletePage,
         )
         if (photoGridOpen) {
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
